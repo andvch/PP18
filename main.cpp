@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <vector>
 #include <ctime>
 
 #define III for (i = 0; i < n1; ++i)
@@ -14,21 +13,16 @@
 	
 #define MULTI(A,B,C) switch (r) { \
 		case 0: CASES(A,B,C,III,JJJ,KKK) break; \
-		case 1: CASES(A,B,C,III,KKK,JJJ) break; \
-		case 2: CASES(A,B,C,JJJ,III,KKK) break; \
-		case 3: CASES(A,B,C,JJJ,KKK,III) break; \
-		case 4: CASES(A,B,C,KKK,III,JJJ) break; \
+		case 1: CASES(A,B,C,JJJ,III,KKK) break; \
+		case 2: CASES(A,B,C,III,KKK,JJJ) break; \
+		case 3: CASES(A,B,C,KKK,III,JJJ) break; \
+		case 4: CASES(A,B,C,JJJ,KKK,III) break; \
 		case 5: CASES(A,B,C,KKK,JJJ,III) break; \
 		}
 
 using namespace std;
 
-typedef vector<float> VecF;
-typedef vector<VecF> MatrixF;
-typedef vector<double> VecD;
-typedef vector<VecD> MatrixD;
-
-void readm(MatrixF &a, MatrixD &b, int &n, int &m, char &c, char *f) {
+void readm(float** &a, double** &b, int &n, int &m, char &c, char *f) {
 	
 	ifstream file(f, ios::binary);
 	if (!file.is_open()) {
@@ -39,29 +33,33 @@ void readm(MatrixF &a, MatrixD &b, int &n, int &m, char &c, char *f) {
 	file.read(&c, 1);
 	file.read((char*)&n, sizeof(int));
 	file.read((char*)&m, sizeof(int));
-	a.resize(n,VecF(m));
-	b.resize(n,VecD(m));
 	
 	if (c == 'f') {
 		float x;
-		for (int i = 0; i < n; ++i)
+		a = new float*[n];
+		for (int i = 0; i < n; ++i) {
+			a[i] = new float[m];
 			for (int j = 0; j < m; ++j) {
 				file.read((char*)&x, sizeof(float));
 				a[i][j] = x;
 			}
+		}
 	} else {
 		double x;
-		for (int i = 0; i < n; ++i)
+		b = new double*[n];
+		for (int i = 0; i < n; ++i) {
+			b[i] = new double[m];
 			for (int j = 0; j < m; ++j) {
 				file.read((char*)&x, sizeof(double));
 				b[i][j] = x;
 			}
+		}
 	}
 	file.close();
 	
 }
 
-void writem(MatrixF &a, int n, int m, char *f) {
+void writem(float** a, int n, int m, char *f) {
 	
 	ofstream file(f, ios::binary | ios::out);
 	if (!file.is_open()) {
@@ -76,14 +74,14 @@ void writem(MatrixF &a, int n, int m, char *f) {
 	float x;
 	for (int i = 0; i < n; ++i)
 		for (int j = 0; j < m; ++j) {
-			x = (float) a[i][j];
+			x = a[i][j];
 			file.write((char*)&x, sizeof(float));
 		}
 	file.close();
 	
 }
 
-void writem(MatrixD &a, int n, int m, char *f) {
+void writem(double** a, int n, int m, char *f) {
 	
 	ofstream file(f, ios::binary | ios::out);
 	if (!file.is_open()) {
@@ -98,8 +96,8 @@ void writem(MatrixD &a, int n, int m, char *f) {
 	double x;
 	for (int i = 0; i < n; ++i)
 		for (int j = 0; j < m; ++j) {
-			x = (double) a[i][j];
-			file.write((char*)&x, sizeof(float));
+			x = a[i][j];
+			file.write((char*)&x, sizeof(double));
 		}
 	file.close();
 	
@@ -113,16 +111,11 @@ int main(int argc, char **argv) {
 	}
 	const int r = atoi(argv[4]);
 	
-	MatrixF af;
-	MatrixD ad;
-	int n1, m1;
-	char c1;
+	float **af, **bf, **cf;
+	double **ad, **bd, **cd;
+	int n1,n2,m1,m2;
+	char c1,c2;
 	readm(af,ad,n1,m1,c1,argv[1]);
-	
-	MatrixF bf;
-	MatrixD bd;
-	int n2, m2;
-	char c2;
 	readm(bf,bd,n2,m2,c2,argv[2]);
 	
 	if (m1 != n2) {
@@ -132,27 +125,19 @@ int main(int argc, char **argv) {
 	
 	int i,j,k;
 	
-	MatrixF cf;
-	MatrixD cd;
-	clock_t t;
-	
+	clock_t t = clock();
 	if (c1 == 'f' and c2 == 'f') {
-		cf.resize(n1,VecF(m2));
-		t = clock();
+		cf = new float*[n1];
+		for (i = 0; i < n1; ++i) cf[i] = new float[m2];
 		MULTI(af,bf,cf)
 	} else {
-		cd.resize(n1,VecD(m2));
-		if (c1 == 'f') {
-			t = clock();
-			MULTI(af,bd,cd)
-		} else if (c2 == 'f') {
-			t = clock();
-			MULTI(ad,bf,cd)
-		} else {
-			t = clock();
-			MULTI(ad,bd,cd)
-		} 
+		cd = new double*[n1];
+		for (i = 0; i < n1; ++i) cd[i] = new double[m2];
+		if (c1 == 'f') MULTI(af,bd,cd)
+		else if (c2 == 'f') MULTI(ad,bf,cd)
+		else MULTI(ad,bd,cd)
 	}
+	
 	cout << (clock() - (float) t) / CLOCKS_PER_SEC << endl;
 	
 	if (c1 == 'f' and c2 == 'f') writem(cf,n1,m2,argv[3]);

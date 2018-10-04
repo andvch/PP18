@@ -18,21 +18,31 @@ equals.o: equals.cpp
 	g++ -c -o equals.o equals.cpp -std=c++11
 	echo "equals.cpp обновлён"
 report: generate main
-	./generate d 500 100 A
-	./generate d 100 500 B
-	echo -e "#X\tY" > report ; \
+	echo -e "#X\tY" > report
 	n=10 ; \
-	for ((i=0;i<=5;i++)) do \
-		echo "Режим $$i..." ; \
-		echo -n -e "$$i\t" >> report ; \
-		time=`./main A.dat B.dat C.dat $$i` ; \
-		for ((j=1;j<$$n;j++)) do \
-			x=`./main A.dat B.dat C.dat $$i` ; \
-			time=`echo "$$time $$x" | awk '{ print $$1 + $$2 }'` ; \
+	t0=0.0 ; t1=0.0 ; t2=0.0 ; t3=0.0 ; t4=0.0 ; t5=0.0 ; \
+	for ((i=0;i<$$n;i++)) do \
+		echo -n "$$i " ; \
+		./generate f 500 500 A.dat ; \
+		./generate f 500 500 B.dat ; \
+		x='' ; \
+		for ((j=0;j<=5;j++)) do \
+			x+=`./main A.dat B.dat C.dat $$j`' ' ; \
 		done ; \
-		time=`echo "$$time $$n" | awk '{ print $$1 / $$2 }'` ; \
-		echo $$time >> report; \
-	done
+		t0=`echo "$$t0 $$x" | awk '{ print $$1 + $$2 }'` ; \
+		t1=`echo "$$t1 $$x" | awk '{ print $$1 + $$3 }'` ; \
+		t2=`echo "$$t2 $$x" | awk '{ print $$1 + $$4 }'` ; \
+		t3=`echo "$$t3 $$x" | awk '{ print $$1 + $$5 }'` ; \
+		t4=`echo "$$t4 $$x" | awk '{ print $$1 + $$6 }'` ; \
+		t5=`echo "$$t5 $$x" | awk '{ print $$1 + $$7 }'` ; \
+	done ; \
+	echo -e "0\t`echo "$$t0 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	echo -e "1\t`echo "$$t1 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	echo -e "2\t`echo "$$t2 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	echo -e "3\t`echo "$$t3 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	echo -e "4\t`echo "$$t4 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	echo -e "5\t`echo "$$t5 $$n" | awk '{ print $$1 / $$2 }'`" >> report ; \
+	rm A.dat ; rm B.dat ; rm C.dat
 	gnuplot plotscript
 	echo "Готово"
 test: main
@@ -44,7 +54,7 @@ test: main
 			if [[ $$x != 1 ]]; then \
 				echo "Тест не пройден" ; \
 				rm $$way/D.dat ; \
-				exit 0 ; \
+				exit ; \
 			fi \
 		done ; \
 		rm $$way/D.dat ; \

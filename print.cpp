@@ -30,9 +30,9 @@ int main(int argc, char **argv) {
 	char c;
 	int n,m;
 	file.read(&c, 1);
-	cout << c << endl;
 	file.read((char*)&n, sizeof(n));
 	file.read((char*)&m, sizeof(m));
+	cout << c << ' ' << n << ' ' << m <<endl;
 	
 	if (c == 'f') DATA(float)
 		else DATA(double)
