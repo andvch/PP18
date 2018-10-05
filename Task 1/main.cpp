@@ -132,11 +132,17 @@ int main(int argc, char **argv) {
 	clock_t t = clock();
 	if (c1 == 'f' and c2 == 'f') {
 		cf = new float*[n1];
-		for (i = 0; i < n1; ++i) cf[i] = new float[m2];
+		for (i = 0; i < n1; ++i) {
+			cf[i] = new float[m2];
+			for (j = 0; j < m2; ++j) cf[i][j] = 0;
+		}
 		MULTI(af,bf,cf)
 	} else {
 		cd = new double*[n1];
-		for (i = 0; i < n1; ++i) cd[i] = new double[m2];
+		for (i = 0; i < n1; ++i) {
+			cd[i] = new double[m2];
+			for (j = 0; j < m2; ++j) cd[i][j] = 0;
+		}
 		if (c1 == 'f') MULTI(af,bd,cd)
 		else if (c2 == 'f') MULTI(ad,bf,cd)
 		else MULTI(ad,bd,cd)
