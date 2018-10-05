@@ -44,7 +44,7 @@ test: main equals
 			./main $$way/A.dat $$way/B.dat $$way/D.dat $$i > /dev/null; \
 			x=`./equals $$way/C.dat $$way/D.dat` ; \
 			if [[ $$x != 1 ]]; then \
-				echo "Тест не пройден" ; \
+				echo "Тест не пройден (режим $$i)" ; \
 				rm $$way/D.dat ; \
 				exit ; \
 			fi \
