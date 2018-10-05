@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <cmath>
 
-#define epsilon 0.000000000000001
+#define epsilon 1.e-15
 
 #define CMP(T) { T x,y; \
 		for (int i = 0; i < n; ++i) \

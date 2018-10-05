@@ -1,22 +1,14 @@
 SHELL := /bin/bash
 MAKEFLAGS += --silent
-all: main.o generate.o print.o equals.o
-	g++ -o main main.o
-	g++ -o generate generate.o
-	g++ -o print print.o
-	g++ -o equals equals.o
-main.o: main.cpp
-	g++ -c -o main.o main.cpp -std=c++11
-	echo "main.cpp обновлён"
-generate.o: generate.cpp
-	g++ -c -o generate.o generate.cpp -std=c++11
-	echo "generate.cpp обновлён"
-print.o: print.cpp
-	g++ -c -o print.o print.cpp -std=c++11
-	echo "print.cpp обновлён"
-equals.o: equals.cpp
-	g++ -c -o equals.o equals.cpp -std=c++11
-	echo "equals.cpp обновлён"
+all: main generate print equals
+main: main.cpp
+	g++ main.cpp -o main -std=c++11
+generate: generate.cpp
+	g++ generate.cpp -o generate -std=c++11
+print: print.cpp
+	g++ print.cpp -o print -std=c++11
+equals: equals.cpp
+	g++ equals.cpp -o equals -std=c++11
 report: generate main
 	echo -e "#X\tY" > report
 	n=10 ; \
@@ -45,7 +37,7 @@ report: generate main
 	rm A.dat ; rm B.dat ; rm C.dat
 	gnuplot plotscript
 	echo "Готово"
-test: main
+test: main equals
 	for way in ./tests/*; do \
 		echo "Тестируется $$way" ; \
 		for ((i=0;i<5;i++)) do \

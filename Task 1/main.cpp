@@ -19,6 +19,8 @@
 		case 4: CASES(A,B,C,JJJ,KKK,III) break; \
 		case 5: CASES(A,B,C,KKK,JJJ,III) break; \
 		}
+		
+#define DEL(A,N) if (A != NULL) { for (i = 0; i < N; ++i) delete A[i]; delete A; }
 
 using namespace std;
 
@@ -35,6 +37,7 @@ void readm(float** &a, double** &b, int &n, int &m, char &c, char *f) {
 	file.read((char*)&m, sizeof(int));
 	
 	if (c == 'f') {
+		b = NULL;
 		float x;
 		a = new float*[n];
 		for (int i = 0; i < n; ++i) {
@@ -45,6 +48,7 @@ void readm(float** &a, double** &b, int &n, int &m, char &c, char *f) {
 			}
 		}
 	} else {
+		a = NULL;
 		double x;
 		b = new double*[n];
 		for (int i = 0; i < n; ++i) {
@@ -111,8 +115,8 @@ int main(int argc, char **argv) {
 	}
 	const int r = atoi(argv[4]);
 	
-	float **af, **bf, **cf;
-	double **ad, **bd, **cd;
+	float **af, **bf, **cf = NULL;
+	double **ad, **bd, **cd = NULL;
 	int n1,n2,m1,m2;
 	char c1,c2;
 	readm(af,ad,n1,m1,c1,argv[1]);
@@ -142,5 +146,12 @@ int main(int argc, char **argv) {
 	
 	if (c1 == 'f' and c2 == 'f') writem(cf,n1,m2,argv[3]);
 		else writem(cd,n1,m2,argv[3]);
+		
+	DEL(af,n1)
+	DEL(ad,n1)
+	DEL(bf,n2)
+	DEL(bd,n2)
+	DEL(cf,n1)
+	DEL(cd,n1)
 	
 }
