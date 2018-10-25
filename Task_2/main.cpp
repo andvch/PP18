@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 	
 	writem(c,n,argv[3]);
 	
-	cout << c[0][0] << endl << c[1][0] << endl << c[2][0] << endl << c[3][0] << endl;
+	cout << values[0] << endl << values[1] << endl << values[2] << endl << values[3] << endl;
 	
 	for (i = 0; i < n; ++i) delete a[i]; delete a;
 	for (i = 0; i < n; ++i) delete b[i]; delete b;
