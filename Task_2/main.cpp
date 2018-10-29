@@ -4,19 +4,25 @@
 #include <ctime>
 #include <papi.h>
 
-#define MULTI(X,Y,Z,S) \
-		for (X = 0; X < n; X += S) \
-		for (Y = 0; Y < n; Y += S) \
-		for (Z = 0; Z < n; Z += S) \
-		for (X##1 = X; (X##1 < X+S) && (X##1 < n); X##1++) \
-		for (Y##1 = Y; (Y##1 < Y+S) && (Y##1 < n); Y##1++) \
-		for (Z##1 = Z; (Z##1 < Z+S) && (Z##1 < n); Z##1++) \
-		c[i1][j1] += a[i1][k1]*b[k1][j1];
+#define _I for (i = 0; i < n; i += block)
+#define _J for (j = 0; j < m; j += block)
+#define _K for (k = 0; k < l; k += block)
+#define _II for (i1 = i; (i1 < i+block) && (i1 < n); ++i1)
+#define _JJ for (j1 = j; (j1 < j+block) && (j1 < m); ++j1)
+#define _KK for (k1 = k; (k1 < k+block) && (k1 < l); ++k1)
+
+#define MULTI(A,B,C,D,E,F) A \
+	B \
+	C \
+	D \
+	E \
+	F \
+	c[i1][j1] += a[i1][k1]*b[k1][j1];
 
 
 using namespace std;
 
-void readm(float** &m, int &n, char *f) {
+void readm(float** &a, int &n, int &m, char *f) {
 	
 	ifstream file(f, ios::binary);
 	if (!file.is_open()) {
@@ -24,22 +30,29 @@ void readm(float** &m, int &n, char *f) {
 		exit(1);
 	}
 	
+	char c;
+	file.read(&c, 1);
+	if (c != 'f') {
+		cout << "Only type float suported" << endl;
+		exit(1);
+	}
 	file.read((char*)&n, sizeof(int));
+	file.read((char*)&m, sizeof(int));
 		
 	float x;
-	m = new float*[n];
+	a = new float*[n];
 	for (int i = 0; i < n; ++i) {
-		m[i] = new float[n];
-		for (int j = 0; j < n; ++j) {
+		a[i] = new float[m];
+		for (int j = 0; j < m; ++j) {
 			file.read((char*)&x, sizeof(float));
-			m[i][j] = x;
+			a[i][j] = x;
 		}
 	}
 	file.close();
 	
 }
 
-void writem(float** m, int n, char *f) {
+void writem(float** a, int n, int m, char *f) {
 	
 	ofstream file(f, ios::binary | ios::out);
 	if (!file.is_open()) {
@@ -47,12 +60,14 @@ void writem(float** m, int n, char *f) {
 		exit(1);
 	}
 	
+	file.write("f", 1);
 	file.write((char*)&n, sizeof(int));
+	file.write((char*)&m, sizeof(int));
 		
 	float x;
 	for (int i = 0; i < n; ++i)
-		for (int j = 0; j < n; ++j) {
-			x = m[i][j];
+		for (int j = 0; j < m; ++j) {
+			x = a[i][j];
 			file.write((char*)&x, sizeof(float));
 		}
 	file.close();
@@ -62,7 +77,7 @@ void writem(float** m, int n, char *f) {
 int main(int argc, char **argv) {
 	
 	if (argc < 4) {
-		cout << "./main A B C mode block" << endl;
+		cout << "./main A B C mode block_size" << endl;
 		return 0;
 	}
 	char mode = 0;
@@ -85,11 +100,11 @@ int main(int argc, char **argv) {
 	int Events[]={PAPI_L1_DCM,PAPI_L2_DCM,PAPI_TOT_CYC,PAPI_FP_OPS};
 		
 	float **a, **b, **c;
-	int n,m;
-	readm(a,n,argv[1]);
-	readm(b,m,argv[2]);
+	int n,m,l,l1;
+	readm(a,n,l,argv[1]);
+	readm(b,l1,m,argv[2]);
 	
-	if (n != m) {
+	if (l != l1) {
 		cout << "Умножение невозможно" << endl;
 		return 1;
 	}
@@ -97,8 +112,8 @@ int main(int argc, char **argv) {
 	int i,j,k,i1,j1,k1;
 	c = new float*[n];
 	for (i = 0; i < n; ++i) {
-		c[i] = new float[n];
-		for (j = 0; j < n; ++j) c[i][j] = 0;
+		c[i] = new float[m];
+		for (j = 0; j < m; ++j) c[i][j] = 0;
 	}
 	
 	if (PAPI_start_counters(Events, 4) != PAPI_OK) {
@@ -107,8 +122,14 @@ int main(int argc, char **argv) {
 	}
 	clock_t t = clock();
 	
-	if (mode) MULTI(i,k,j,block)
-		else MULTI(i,j,k,block)
+	switch (mode) {
+		case 1: MULTI(_I,_K,_J,_II,_KK,_JJ) break; \
+		case 2: MULTI(_J,_I,_K,_JJ,_II,_KK) break; \
+		case 3: MULTI(_J,_K,_I,_JJ,_KK,_II) break; \
+		case 4: MULTI(_K,_I,_J,_KK,_II,_JJ) break; \
+		case 5: MULTI(_K,_J,_I,_KK,_JJ,_II) break; \
+		default: MULTI(_I,_J,_K,_II,_JJ,_KK) break; \
+	}
 	
 	cout << (clock() - (float) t) / CLOCKS_PER_SEC << endl;
 	if (PAPI_stop_counters(values, 4) != PAPI_OK) {
@@ -116,12 +137,12 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	
-	writem(c,n,argv[3]);
+	writem(c,n,m,argv[3]);
 	
 	cout << values[0] << endl << values[1] << endl << values[2] << endl << values[3] << endl;
 	
 	for (i = 0; i < n; ++i) delete a[i]; delete a;
-	for (i = 0; i < n; ++i) delete b[i]; delete b;
+	for (i = 0; i < l; ++i) delete b[i]; delete b;
 	for (i = 0; i < n; ++i) delete c[i]; delete c;
 	
 	return 0;

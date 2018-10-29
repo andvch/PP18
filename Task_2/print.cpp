@@ -2,17 +2,23 @@
 #include <fstream>
 #include <iomanip>
 
+#define DATA(T) T d; \
+	for (int i = 0; i < n; ++i) { \
+		for (int j = 0; j < m; ++j) { \
+			file.read((char*)&d, sizeof(T)); \
+			cout << d << '\t'; \
+		} \
+	cout << endl; \
+	}
+
 using namespace std;
 
 int main(int argc, char **argv) {
 	
 	if (argc < 2) {
-		cout << "./print file [-a]" << endl;
+		cout << "./print file" << endl;
 		return 0;
 	}
-	
-	bool a = false;
-	if (argc > 2) if ((argv[2][0] == '-') && (argv[2][1] == 'a')) a = true; 
 	
 	ifstream file(argv[1], ios::binary);
 	if (!file.is_open()) {
@@ -20,20 +26,16 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	int n;
+	char c;
+	file.read(&c, 1);
+	if ((c != 'f') and (c != 'd')) {cout << "incorrect type of matrix" << endl; return 1;}
+	int n,m;
 	file.read((char*)&n, sizeof(n));
-	cout << n << 'x' << n << scientific << endl;
+	file.read((char*)&m, sizeof(m));
 	
-	if (!a) { file.close(); return 0; }
-	
-	float x;
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			file.read((char*)&x, sizeof(float));
-			cout << x << '\t';
-		}
-	cout << endl;
-	}
+	cout << n << 'x' << m;
+	if (c == 'f') { cout << " (float)" << endl << scientific; DATA(float) }
+		else { cout << " (double)" << endl << scientific; DATA(double) }
 	
 	file.close();
 	return 0;

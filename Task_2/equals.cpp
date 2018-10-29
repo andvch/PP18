@@ -3,12 +3,24 @@
 #include <iomanip>
 #include <cmath>
 
+#define CMP(T1,T2) { T1 x; T2 y; \
+		for (int i = 0; i < n; ++i) \
+			for (int j = 0; j < m; ++j) { \
+				f1.read((char*)&x, sizeof(T1)); \
+				f2.read((char*)&y, sizeof(T2)); \
+				if (abs(x-y) > epsilon) { \
+					cout << '0' << endl; \
+					cout << '(' << i << ',' << j << "): " << scientific << x << " != " << y << endl; \
+					f1.close(); f2.close(); return 0; } \
+			} \
+		}
+
 using namespace std;
 
 int main(int argc, char **argv) {
 	
 	if (argc < 3) {
-		cout << "./equals A B epsilon" << endl;
+		cout << "./equals A B [epsilon]" << endl;
 		return 0;
 	}
 	
@@ -25,29 +37,31 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	int n,m;
+	char c,c1;
+	f1.read(&c, 1);
+	if ((c != 'f') and (c != 'd')) { cout << "incorrect type of matrix " << argv[1] << endl; return 1; }
+	f2.read(&c1, 1);
+	if ((c1 != 'f') and (c1 != 'd')) { cout << "incorrect type of matrix" << argv[2] << endl; return 1; }
+	int n,m,n1,m1;
 	f1.read((char*)&n, sizeof(int));
-	f2.read((char*)&m, sizeof(int));
-	if (n != m) {
+	f1.read((char*)&m, sizeof(int));
+	f2.read((char*)&n1, sizeof(int));
+	f2.read((char*)&m1, sizeof(int));
+	if (n != n1 or m != m1) {
 		cout << '0' << endl;
 		cout << "Матрицы разных размеров" << endl;
-		return 0;
+		return 1;
 	}
-	float x,y;
-	for (int i = 0; i < n; ++i)
-		for (int j = 0; j < n; ++j) {
-			f1.read((char*)&x, sizeof(float));
-			f2.read((char*)&y, sizeof(float));
-			if (abs(x-y) > epsilon) {
-				cout << '0' << endl;
-				cout << i << ' ' << j << ": " << scientific << x << ' ' << y << endl;
-				f1.close();
-				f2.close();
-				return 0;
-			}
-		}
+	
+	if (c == 'f') {
+		if (c1 == 'f') CMP(float,float)
+		else CMP(float,double) }
+	else { if (c1 == 'f') CMP(double,float)
+		else CMP(double,double) }
+	
 	cout << '1' << endl;
 	f1.close();
 	f2.close();
 	return 0;
+	
 }
