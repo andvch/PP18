@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <cstdlib>
 #include <cmath>
 #include <mpi.h>
@@ -20,22 +19,18 @@ int main(int argc, char *argv[]) {
 		MPI_Finalize();
 		return 0;
 	}
-	
-	if (size < 2) {
-		cout << "Требуется не менее 2 вычислительных узлов" << endl;
-		MPI_Finalize();
-		return 0;
-	}
+	bool flag = false;
+	if (argc > 4) if ((argv[4][0] == '-') and (argv[4][1] == 'n')) flag = true;
 	
 	int a = atoi(argv[1]), b = atoi(argv[2]), c, d;
 	if (a < 2) a = 2;
 	if ((b < a) or (b < 2)) {
-		if (!rank) cout << '0' << endl;
+		if (!rank) cout << "Неверный диапазон" << endl;
 		MPI_Finalize();
 		return 0;
 	}
 	
-	double time, timeMAX, timeSUM, t0 = MPI_Wtime();
+	double time, timeMAX, timeSUM, t0;
 	int sb = (int) trunc(sqrt(b));
 	
 	if (rank) {
@@ -44,8 +39,8 @@ int main(int argc, char *argv[]) {
 		c += d*(rank-1);
 		d = (rank == size-1) ? b : c + d - 1;
 		if (d < c) {
-			time = MPI_Wtime() - t0;
 			d = 0;
+			time = 0;
 			MPI_Send(&d, 1, MPI_INT, 0,0, comm);
 			MPI_Reduce(&time, &timeMAX, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
 			MPI_Reduce(&time, &timeSUM, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
@@ -56,13 +51,15 @@ int main(int argc, char *argv[]) {
 	}
 	
 	
-	
-	int x, n, m, i, j, k ,l, sum = 0;
 	char *s = NULL, *p = NULL;
-	int *buf;
+	int *buf, x, n, m, i, j, k ,l, sum = 0;
 	
-	if ((rank) or (a < sb+1)) {
-		x = (rank) ? (int) trunc(sqrt(d))-1 : sb-1;
+	t0 = MPI_Wtime();
+	
+	if ((rank) or (a < sb+1) or (size == 1)) {
+		if (rank) x = (int) trunc(sqrt(d))-1;
+			else if (size == 1) x = b - 1;
+				else x = sb-1;
 		n = (x%8) ? x/8 + 1 : x/8;
 		
 		s = new char[n];
@@ -91,14 +88,14 @@ int main(int argc, char *argv[]) {
 		
 		time = MPI_Wtime() - t0;
 		
-		ofstream file(argv[3]);
-		if (!file.is_open()) {
+		FILE *file = fopen(argv[3], "w");
+		if (file == NULL) {
 			cout << "Error opening file " << argv[3] << endl;
 			MPI_Finalize();
 			return 1;
 		}
 		
-		if (a < sb+1) {
+		if ((a < sb+1) or (size == 1)) {
 			i = (a-2)/8;
 			s[i] &= (0xFF >> (a-2)%8);
 			for (; i < n; ++i) {
@@ -106,32 +103,39 @@ int main(int argc, char *argv[]) {
 				for (j = 0; j < 8; ++j) {
 					if (!((s[i] >> (7-j)) & 1)) continue;
 					x = 8*i + j + 2;
-					file << x << endl;
+					fprintf(file, "%d\n", x);
 					++sum;
 				}
 			}
 		}
 		
-		k = (b-a)/(size-1) + 1;
-		buf = new int[k];
-		
-		for (i = 1; i < size; ++i) {
-			MPI_Recv(buf, k, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &status);
-			MPI_Get_count(&status, MPI_INT, &l);
-			if ((l == 1) and (buf[0] == 0)) continue;
-			for (j = 0; j < l; ++j) file << buf[j] << endl;
-			sum += l;
+		if (size > 1) {
+			x = (b-a)/(size) + 1;
+			buf = new int[x];
+			
+			for (i = 1; i < size; ++i) {
+				MPI_Recv(buf, x, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &status);
+				MPI_Get_count(&status, MPI_INT, &l);
+				if (buf[0] == 0) continue;
+				for (j = 0; j < l; ++j) fprintf(file, "%d\n", buf[j]);
+				sum += l;
+			}
+			delete[] buf;
 		}
-		file.close();
 		
-		cout << sum << endl;
+		fclose(file);
 		
 		MPI_Reduce(&time, &timeMAX, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
 		MPI_Reduce(&time, &timeSUM, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
 		
-		cout << "Максимальное время: " << timeMAX << endl << "Среднее время: " << timeSUM / size << endl;
-		
-		delete[] buf;
+		if (flag) cout << size << "\t" << timeSUM << "\t" << timeSUM / size << "\t" << timeMAX << endl;
+			else {
+			cout << "Найдено " << sum << " простых чисел" << endl;
+			cout << "Вычислительных узлов: " << size << endl;
+			cout << "Суммарное время: " << timeSUM << endl;
+			cout << "Среднее время: " << timeSUM / size << endl;
+			cout << "Максимальное время: " << timeMAX << endl;
+		}
 		
 	} else {
 		
