@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 				for (j = 0; j < 8; ++j) {
 					if (!((s[i] >> (7-j)) & 1)) continue;
 					x = 8*i + j + 2;
-					fprintf(file, "%d\n", x);
+					fprintf(file, "%d ", x);
 					++sum;
 				}
 			}
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 				MPI_Recv(buf, x, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &status);
 				MPI_Get_count(&status, MPI_INT, &l);
 				if (buf[0] == 0) continue;
-				for (j = 0; j < l; ++j) fprintf(file, "%d\n", buf[j]);
+				for (j = 0; j < l; ++j) fprintf(file, "%d ", buf[j]);
 				sum += l;
 			}
 			delete[] buf;
