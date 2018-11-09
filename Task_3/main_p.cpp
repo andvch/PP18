@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include <ctime>
+#include <time.h>
 #include <pthread.h>
 
 using namespace std;
@@ -12,11 +12,9 @@ typedef struct arg {
 	int c, d, n;
 	char *s;
 	FILE *file;
-	float time;
+	double time;
 	
 } arg;
-
-//pthread_mutex_t lock;
 
 void *work (void *ptr) {
 	
@@ -38,7 +36,8 @@ void *work (void *ptr) {
 	fill_n(p, m, 0xFF);
 	if (x%8) p[m-1] ^= (0xFF >> x%8);
 	
-	clock_t t0 = clock();
+	struct timespec t0, t1;
+	clock_gettime(CLOCK_REALTIME, &t0);
 	
 	for (i = 0; i < n; ++i) {
 		if (!(s[i])) continue;
@@ -57,7 +56,8 @@ void *work (void *ptr) {
 		}
 	}
 	
-	A->time = (clock() - (float) t0) / CLOCKS_PER_SEC;
+	clock_gettime(CLOCK_REALTIME, &t1);
+	A->time = (double) (t1.tv_sec - t0.tv_sec) + 1e-9 * (t1.tv_nsec - t0.tv_nsec);
 	
 	for (i = 0; i < m; ++i) {
 		if (!(p[i])) continue;
@@ -106,7 +106,8 @@ int main(int argc, char *argv[]) {
 	fill_n(s, n, 0xFF);
 	if (x%8) s[n-1] ^= (0xFF >> x%8);
 	
-	clock_t t0 = clock();
+	struct timespec t0, t1;
+	clock_gettime(CLOCK_REALTIME, &t0);
 	
 	for (i = 0; i < n; ++i) {
 		if (!(s[i])) continue;
@@ -124,7 +125,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	float time = (clock() - (float) t0) / CLOCKS_PER_SEC;
+	clock_gettime(CLOCK_REALTIME, &t1);
+	double time = (double) (t1.tv_sec - t0.tv_sec) + 1e-9 * (t1.tv_nsec - t0.tv_nsec);
 	
 	FILE *file = fopen(argv[4], "w");
 	if (file == NULL) {
@@ -152,7 +154,6 @@ int main(int argc, char *argv[]) {
 	}
 	
 	pthread_t threads[size-1];
-//	pthread_mutex_init(&lock, NULL);
 	
 	for (long id = 0; id < size - 1; id++)
 		pthread_create(threads + id, NULL, work, A + id);
@@ -176,8 +177,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	float timeSUM = time, timeMAX = time;
-	for(i = 0; i < size-1; i++) {
+	double timeSUM = time, timeMAX = time;
+	for (i = 0; i < size-1; i++) {
 		pthread_join(threads[i], NULL);
 		timeSUM += A[i].time;
 		if (A[i].time > timeMAX) timeMAX = A[i].time;
