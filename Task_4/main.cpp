@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	if (m[1] != 1) {
-		if (!rank) cout << "b не является вектором" << endl;
+		if (!rank) cout << argv[2] << " не является вектором" << endl;
 		MPI_Finalize();
 		return 1;
 	}
@@ -88,14 +88,6 @@ int main(int argc, char **argv) {
 	MPI_File_close(&fa);
 	MPI_File_close(&fb);
 	
-/*	cout << rank << " A ";
-	for (i = 0; i < l[0]*l[1]; ++i) cout << a[i] << ' ';
-	cout << endl;
-	
-	cout << rank << " B ";
-	for (i = 0; i < l[1]; ++i) cout << b[i] << ' ';
-	cout << endl;*/
-	
 	c = new double[n[0]];
 	fill_n(c, n[0], 0);
 	p = (mode) ? rank*(n[0]/size) : 0;
@@ -107,10 +99,6 @@ int main(int argc, char **argv) {
 			c[p+i] += a[i*l[1]+j]*b[j];
 	
 	time = MPI_Wtime() - t0;
-	
-/*	cout << rank << " C ";
-	for (i = 0; i < n[0]; ++i) cout << c[i] << ' ';
-	cout << endl;*/
 	
 	if (!rank) s = new double[n[0]];
 	MPI_Reduce(c, s, n[0], MPI_DOUBLE, MPI_SUM, 0, comm);

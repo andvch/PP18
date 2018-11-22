@@ -18,7 +18,7 @@ using namespace std;
 int main(int argc, char **argv) {
 	
 	if (argc < 5) {
-		cout << "./generate f 10 10 file" << endl;
+		cout << "./generate f|d n m file" << endl;
 		return 0;
 	}
 	
