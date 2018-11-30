@@ -1,0 +1,7 @@
+# @ job_type = bluegene
+# @ output = time_0512#
+# @ error = 0512#.err
+# @ wall_clock_limit = 00:05:00
+# @ bg_size = 512
+# @ queue
+/bgsys/drivers/ppcfloor/bin/mpirun -mapfile my.map ./main A.dat B.dat C_0512#.dat mapping

@@ -14,12 +14,12 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(comm, &size);
 	
 	if (argc < 4) {
-		if (!rank) cout << "./main A B C" << endl;
+		if (!rank) cout << argv[0] << " A B C" << endl;
 		MPI_Finalize();
 		return 0;
 	}
 	
-	MPI_File fa, fb, fc;
+	MPI_File fa, fb;
 	double *a, *b, *c, *s;
 	int n[2],m[2],l[2], i, j, p;
 	char ca, cb;
@@ -55,32 +55,36 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	bool mode = (n[0] > n[1]);
+	bool mode = (n[0] >= n[1]);
 	if (mode) {
 		
-		l[0] = n[0] / size;
+		l[0] = (n[0] % size) ? n[0] / (size-1) : n[0] / size;
 		l[1] = n[1];
+		c = new double[l[0]];
+		fill_n(c, l[0], 0);
 		MPI_File_seek(fa,sizeof(double)*rank*l[0]*l[1], MPI_SEEK_CUR);
-		if (rank == size-1) l[0] += n[0] % size;
+		if (rank == size-1) if (n[0] % size) l[0] = n[0] % (size-1);
+		
 		a = new double[l[0]*l[1]];
 		MPI_File_read(fa, a, l[0]*l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
-		
 		b = new double[l[1]];
 		MPI_File_read(fb, b, l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
 		
 	} else {
 		
 		l[0] = n[0];
-		l[1] = n[1] / size;
+		l[1] = (n[1] % size) ? n[1] / (size-1) : n[1] / size;
+		c = new double[l[0]];
+		fill_n(c, l[0], 0);
 		MPI_File_seek(fa,sizeof(double)*rank*l[1], MPI_SEEK_CUR);
 		MPI_File_seek(fb,sizeof(double)*rank*l[1], MPI_SEEK_CUR);
-		if (rank == size-1) l[1] += n[1] % size;
+		if (rank == size-1) if (n[1] % size) l[1] = n[1] % (size-1);
+		
 		a = new double[l[0]*l[1]];
 		for (i = 0; i < n[0]; ++i) {
 			MPI_File_read(fa, a+i*l[1], l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
 			MPI_File_seek(fa, sizeof(double)*(n[1]-l[1]), MPI_SEEK_CUR);
 		}
-		
 		b = new double[l[1]];
 		MPI_File_read(fb, b, l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
 		
@@ -88,20 +92,24 @@ int main(int argc, char **argv) {
 	MPI_File_close(&fa);
 	MPI_File_close(&fb);
 	
-	c = new double[n[0]];
-	fill_n(c, n[0], 0);
-	p = (mode) ? rank*(n[0]/size) : 0;
-	
-	double time, timeMAX, timeSUM, t0 = MPI_Wtime();
+	MPI_Barrier(comm);
+	double timeMAX, timeSUM, time = MPI_Wtime();
 	
 	for (i = 0; i < l[0]; ++i)
 		for (j = 0; j < l[1]; ++j)
-			c[p+i] += a[i*l[1]+j]*b[j];
+			c[i] += a[i*l[1]+j]*b[j];
 	
-	time = MPI_Wtime() - t0;
+	if (mode) {
+		if (!rank) s = new double[l[0]*size];
+		if (rank == size-1) if (n[0] % size) l[0] = n[0] / (size-1);
+		MPI_Gather(c, l[0], MPI_DOUBLE, s, l[0], MPI_DOUBLE, 0, comm);
+	} else {
+		if (!rank) s = new double[l[0]];
+		MPI_Reduce(c, s, l[0], MPI_DOUBLE, MPI_SUM, 0, comm);
+	}
 	
-	if (!rank) s = new double[n[0]];
-	MPI_Reduce(c, s, n[0], MPI_DOUBLE, MPI_SUM, 0, comm);
+	time = MPI_Wtime() - time;
+	
 	MPI_Reduce(&time, &timeMAX, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
 	MPI_Reduce(&time, &timeSUM, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
 	if (!rank) {

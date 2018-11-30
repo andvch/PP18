@@ -11,27 +11,26 @@
 		} \
 	} \
 } 
-	
 
 using namespace std;
 
 int main(int argc, char **argv) {
 	
 	if (argc < 5) {
-		cout << "./generate f|d n m file" << endl;
+		cout << argv[0] << " f|d N M file" << endl;
 		return 0;
 	}
 	
 	if (argv[1][0] != 'f' and argv[1][0] != 'd') {
 		cout << "incorrect type" << endl << "f - float" << endl  << "d - double" << endl;
-		return 0;
+		return 1;
 	}
 	
 	int n = atoi(argv[2]), m = atoi(argv[3]);
 	
-	if (n == 0 or m == 0) {
+	if (n <= 0 or m <= 0) {
 		cout << "incorrect size of matrix" << endl;
-		return 0;
+		return 1;
 	}
 	
 	ofstream file(argv[4], ios::binary | ios::out);
@@ -49,5 +48,6 @@ int main(int argc, char **argv) {
 		else DATA(double)
 	
 	file.close();
+	return 0;
 	
 }
