@@ -36,5 +36,20 @@ report:
 		echo "$${x[@]}" | sed 's/ /\t/g' >> report ; \
 	done
 	gnuplot plotscript
+test: main equals
+	for way in ./tests/*; do \
+		echo "Тестируется $$way" ; \
+		for n in 1 2 3 5 7 10; do \
+			mpirun -n $$n ./main $$way/A.dat $$way/B.dat $$way/D.dat > /dev/null ; \
+			x=`./equals $$way/C.dat $$way/D.dat` ; \
+			if [[ $$x != 1 ]]; then \
+				echo "Тест не пройден (процессов: $$n)" ; \
+				rm $$way/D.dat ; \
+				exit ; \
+			fi \
+		done ; \
+		rm $$way/D.dat ; \
+	done ; \
+	echo "Тест пройден"
 clean:
 	rm main generate print equals mapgen my.map *.dat time_*
