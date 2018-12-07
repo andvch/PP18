@@ -55,12 +55,14 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
+	int offset;
 	bool mode = (n[0] >= n[1]);
 	if (mode) {
 		
 		l[0] = n[0] / size;
 		l[1] = n[1];
-		MPI_File_seek(fa,sizeof(double)*rank*l[0]*l[1], MPI_SEEK_CUR);
+		offset = sizeof(char) + 2*sizeof(int) + sizeof(double)*rank*l[0]*l[1];
+		MPI_File_seek(fa, offset, MPI_SEEK_SET);
 		if (rank == size-1) l[0] += n[0] % size;
 		a = new double[l[0]*l[1]];
 		MPI_File_read(fa, a, l[0]*l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
@@ -71,13 +73,15 @@ int main(int argc, char **argv) {
 		
 		l[0] = n[0];
 		l[1] = n[1] / size;
-		MPI_File_seek(fa,sizeof(double)*rank*l[1], MPI_SEEK_CUR);
-		MPI_File_seek(fb,sizeof(double)*rank*l[1], MPI_SEEK_CUR);
+		offset = sizeof(char) + 2*sizeof(int) + sizeof(double)*rank*l[1];
+		MPI_File_seek(fa, offset, MPI_SEEK_SET);
+		MPI_File_seek(fb, offset, MPI_SEEK_SET);
 		if (rank == size-1) l[1] += n[1] % size;
 		a = new double[l[0]*l[1]];
 		for (i = 0; i < n[0]; ++i) {
 			MPI_File_read(fa, a+i*l[1], l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
-			MPI_File_seek(fa, sizeof(double)*(n[1]-l[1]), MPI_SEEK_CUR);
+			offset += sizeof(double)*n[1];
+			MPI_File_seek(fa, offset, MPI_SEEK_SET);
 		}
 		b = new double[l[1]];
 		MPI_File_read(fb, b, l[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
