@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	int n = 125;
+	int n = 128;
 	int a[n], i, j, t;
 	for (i = 0; i < n; ++i) a[i] = i;
 	
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 		 a[i] = a[j];
 		 a[j] = t;
 	}
-	for (i = 0; i < n; ++i) file << a[i] / 25 << ' ' << (a[i] % 25) / 5 << ' ' << a[i] % 5 << " 0" << endl;
+	for (i = 0; i < n; ++i) file << a[i] / 32 << ' ' << (a[i] % 32) / 8 << ' ' << a[i] % 8 << " 0" << endl;
 	
 	file.close();
 	return 0;

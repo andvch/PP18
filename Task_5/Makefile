@@ -2,36 +2,25 @@ SHELL := /bin/bash
 #MAKEFLAGS += --silent
 n := 1024
 
-all: main generate print equals
+all: main generate print equals mapgen
 main: main.cpp
-	mpicxx $^ -o $@
-generate: generate.cpp
+	mpicxx $^ -o $@ -O3
+.cpp:
 	g++ $^ -o $@
-print: print.cpp
-	g++ $^ -o $@
-equals: equals.cpp
-	g++ $^ -o $@
-mapgen: mapgen.cpp
-	g++ $^ -o $@
-A.dat B.dat: generate
+%.dat: generate
 	./generate d $(n) $(n) $@
-my.map: mapgen
+%.map: mapgen
 	./mapgen $@
 submit: main A.dat B.dat my.map
 	for n in 0001 0008 0064 0125; do \
 		mpisubmit.bg -n $$n -w 00:05:00 --stdout time_$$n --stderr $$n.err ./main -- A.dat B.dat C_$$n.dat ; \
 	done
 	llsubmit job.jcf
+.PHONY: report
 report:
 	x=(`cat time_0001`) ; \
-	n=$${x[3]} ; \
-	for file in time_*; do \
-		x=(`cat $$file`) ; \
-		x[1]=$${x[3]} ; \
-		x[2]=`echo "$$n $${x[1]}" | awk '{ print $$1 / $$2 }'` ; \
-		x[3]=`echo "$${x[2]} $${x[0]}" | awk '{ print $$1 / $$2 }'` ; \
-		echo "$${x[@]}" | sed 's/ /\t/g' >> report ; \
-	done
+	cat time_* | awk -v t1="$${x[2]}" -v t2="$${x[4]}" -v t3="$${x[6]}" \
+		'{ print $$1 "\t" $$5 "\t" t2 / $$5 "\t" t2 / ($$1*$$5) "\t" $$3 "\t" $$7 "\t" $$8 }' > report ; \
 	gnuplot plotscript
 test: main equals
 	for way in ./tests/*; do \
@@ -49,4 +38,4 @@ test: main equals
 	done ; \
 	echo "Тест пройден"
 clean:
-	rm main generate print equals mapgen my.map *.dat time_*
+	rm main generate print equals mapgen *.map *.dat time_*

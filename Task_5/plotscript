@@ -15,3 +15,11 @@ plot x lt 0, "report" using 1:3 w l lw 2
 set output 'plot3.png'
 set ylabel "Эффективность"
 plot 1 lt 0, "report" using 1:4 w l lw 2
+
+set output 'plot5.png'
+set ylabel "Время"
+plot "report" using 1:5 w l lw 2
+
+set output 'plot6.png'
+set ylabel "Время"
+plot "report" using 1:6 w l lw 2
